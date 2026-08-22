@@ -67,16 +67,56 @@ if ('serviceWorker' in navigator) {
 const yearEl = $('#year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+/* ===== CV DOWNLOAD ===== */
+(function initCvDownload() {
+  $$('a[download][href$=".pdf"]').forEach(link => {
+    link.addEventListener('click', async (event) => {
+      if (!window.fetch || !window.URL || !window.URL.createObjectURL) return;
+      event.preventDefault();
+      try {
+        const response = await fetch(link.href);
+        if (!response.ok) throw new Error('CV request failed');
+        const blob = await response.blob();
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = link.download || 'MD-Ismail-Hossen-CV.pdf';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        setTimeout(() => URL.revokeObjectURL(downloadLink.href), 1000);
+      } catch {
+        window.location.href = link.href;
+      }
+    });
+  });
+})();
+
 /* ===== CUSTOM CURSOR ===== */
 (function initCursor() {
   const ring = $('#cursor-ring');
   const dot  = $('#cursor-dot');
   if (!ring || !dot) return;
 
+  let enabled = false;
+  const enableForMouse = (e) => {
+    if (e.pointerType !== 'mouse') return;
+    enabled = true;
+    document.documentElement.classList.add('cursor-enabled');
+  };
+  document.addEventListener('pointermove', enableForMouse, { passive: true });
+  document.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse') {
+      enabled = false;
+      document.documentElement.classList.remove('cursor-enabled');
+      document.body.classList.remove('cursor-hover');
+    }
+  }, { passive: true });
+
   let mx = -200, my = -200;
   let rx = -200, ry = -200;
 
-  document.addEventListener('mousemove', (e) => {
+  document.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse' || !enabled) return;
     mx = e.clientX; my = e.clientY;
     dot.style.left = mx + 'px';
     dot.style.top  = my + 'px';
@@ -93,6 +133,7 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   // Hover detection
   document.addEventListener('mouseover', (e) => {
+    if (!enabled) return;
     const t = e.target.closest('a, button, [data-hover]');
     document.body.classList.toggle('cursor-hover', !!t);
   });
@@ -340,50 +381,59 @@ $$('a[href^="#"]').forEach(a => {
 /* ===== PROJECTS ===== */
 (function initProjects() {
   const grid = $('#projects-grid');
+  const count = $('#project-count');
   if (!grid) return;
 
   let allProjects = [];
+
+  const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[char]));
 
   function cardHTML(p, idx) {
     const catMap = { websites: 'Website', youtube: 'YouTube', stories: 'Story' };
     const label  = catMap[p.category] || p.category;
     const num    = String(idx + 1).padStart(2, '0');
-    const tags   = (p.tags || []).map(t => `<span class="pc-tag">${t}</span>`).join('');
+    const tags   = (p.tags || []).map(t => `<span class="pc-tag">${escapeHTML(t)}</span>`).join('');
     const ytIcon = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>`;
     const extIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
     const arrowIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`;
     const linkIcon = p.category === 'youtube' ? ytIcon : extIcon;
     return `
-      <div class="project-card glass tilt-card reveal showing" data-cat="${p.category}">
+      <article class="project-card glass tilt-card reveal showing${p.featured ? ' project-card--featured' : ''}" data-cat="${escapeHTML(p.category)}">
         <div class="pc-img-wrap">
-          <img src="${p.img}" alt="${p.title}" loading="lazy" />
+          <img src="${escapeHTML(p.img)}" alt="${escapeHTML(p.title)} project preview" loading="lazy" />
           <div class="pc-img-overlay"></div>
           <span class="pc-num">${num}</span>
-          <span class="pc-badge pc-badge--${p.category}">${label}</span>
-          <a href="${p.link}" target="_blank" rel="noreferrer" class="pc-quick-link" aria-label="Open ${p.title}">${linkIcon}</a>
+          <span class="pc-badge pc-badge--${escapeHTML(p.category)}">${escapeHTML(label)}</span>
+          ${p.featured ? '<span class="pc-featured-label">Featured</span>' : ''}
+          <a href="${escapeHTML(p.link)}" target="_blank" rel="noopener noreferrer" class="pc-quick-link" aria-label="Open ${escapeHTML(p.title)}">${linkIcon}</a>
         </div>
         <div class="pc-body">
-          <h4 class="pc-title">${p.title}</h4>
-          <p class="pc-desc">${p.desc}</p>
+          <p class="pc-client">${escapeHTML(p.client || 'Independent project')} <span>·</span> ${escapeHTML(p.year || '')}</p>
+          <h4 class="pc-title">${escapeHTML(p.title)}</h4>
+          <p class="pc-desc">${escapeHTML(p.desc)}</p>
+          ${p.outcome ? `<p class="pc-outcome"><strong>Focus</strong> ${escapeHTML(p.outcome)}</p>` : ''}
           <div class="pc-tags">${tags}</div>
           <div class="pc-footer">
             <div class="pc-meta">
-              <span class="pc-role">${p.role || 'Creator'}</span>
+              <span class="pc-role">${escapeHTML(p.role || 'Creator')}</span>
               <span class="pc-dot">·</span>
-              <span class="pc-year">${p.year || ''}</span>
+              <span class="pc-year">${escapeHTML(p.year || '')}</span>
             </div>
-            <a href="${p.link}" target="_blank" rel="noreferrer" class="pc-cta">
+            <a href="${escapeHTML(p.link)}" target="_blank" rel="noopener noreferrer" class="pc-cta">
               View ${arrowIcon}
             </a>
           </div>
         </div>
         <div class="pc-glow-border"></div>
-      </div>`;
+      </article>`;
   }
 
   function render(filter) {
     const filtered = filter === 'all' ? allProjects : allProjects.filter(p => p.category === filter);
     grid.innerHTML = filtered.map((p, i) => cardHTML(p, i)).join('');
+    if (count) count.textContent = `${filtered.length} ${filtered.length === 1 ? 'project' : 'projects'}`;
 
     $$('.tilt-card', grid).forEach(card => {
       card.addEventListener('mousemove', (e) => {
@@ -411,7 +461,9 @@ $$('a[href^="#"]').forEach(a => {
     $$('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         $$('.filter-btn').forEach(b => b.classList.remove('active'));
+        $$('.filter-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
         render(btn.dataset.filter);
       });
     });
@@ -425,7 +477,8 @@ $$('a[href^="#"]').forEach(a => {
       bindFilters();
     })
     .catch(() => {
-      grid.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.4)">Could not load projects.</p>';
+      if (count) count.textContent = 'Unavailable';
+      grid.innerHTML = '<p class="projects-empty">Could not load projects right now.</p>';
     });
 })();
 

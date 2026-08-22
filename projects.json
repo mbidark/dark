@@ -7,7 +7,10 @@
     "desc": "An immersive storytelling platform where each story unfolds like a cinematic experience — built with hand-crafted animations and dark aesthetic.",
     "tags": ["UI Design", "Storytelling", "Animation"],
     "role": "Designer & Developer",
-    "year": "2024"
+    "year": "2024",
+    "featured": true,
+    "client": "MBI Dark",
+    "outcome": "A cinematic reading experience for Bengali stories."
   },
   {
     "title": "Chaya",
@@ -17,7 +20,9 @@
     "desc": "A spine-chilling ghost series on YouTube exploring the supernatural through masterful cinematography and immersive storytelling.",
     "tags": ["Film Making", "Horror", "Cinematography"],
     "role": "Director & Editor",
-    "year": "2024"
+    "year": "2024",
+    "client": "MBI Dark",
+    "outcome": "A suspense-led visual series shaped for YouTube."
   },
   {
     "title": "Bissash",
@@ -27,7 +32,9 @@
     "desc": "A deeply emotional narrative about trust, faith, and the bonds that hold us together — told through vivid, poetic prose.",
     "tags": ["Fiction", "Drama", "Bengali Literature"],
     "role": "Author & Art Director",
-    "year": "2023"
+    "year": "2023",
+    "client": "MBI Dark",
+    "outcome": "A focused story experience for reflective reading."
   },
   {
     "title": "Bekar Golpo",
@@ -37,7 +44,9 @@
     "desc": "A collaborative YouTube channel delivering creative short films, sketches, and stories that resonate with the everyday Bengali audience.",
     "tags": ["YouTube", "Short Film", "Comedy"],
     "role": "Co-Creator & Director",
-    "year": "2023"
+    "year": "2023",
+    "client": "Bekar Golpo",
+    "outcome": "Short-form entertainment made for a Bengali audience."
   },
   {
     "title": "MBI_BOSS",
@@ -47,7 +56,9 @@
     "desc": "My personal YouTube channel — a creative canvas for experimental videos, vlogs, and unfiltered expressions of art and imagination.",
     "tags": ["Vlog", "Creative", "Personal Brand"],
     "role": "Creator & Videographer",
-    "year": "2022"
+    "year": "2022",
+    "client": "MBI Boss",
+    "outcome": "An independent channel for experiments and expression."
   },
   {
     "title": "Dark CLC",
@@ -57,6 +68,8 @@
     "desc": "A sleek, professional calculator web app with a dark aesthetic, smooth interactions, and precision engineering for everyday computation.",
     "tags": ["Web App", "Dark UI", "JavaScript"],
     "role": "Designer & Developer",
-    "year": "2023"
+    "year": "2023",
+    "client": "MBI Dark",
+    "outcome": "A fast, focused utility designed for everyday use."
   }
 ]
