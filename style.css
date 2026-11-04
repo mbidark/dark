@@ -1923,6 +1923,7 @@ a.contact-val:hover { color: var(--cyan); }
   width: fit-content;
   margin-inline: auto;
   font-family: 'Space Grotesk', sans-serif;
+  color: #fff;
   font-weight: 700;
   letter-spacing: -0.055em;
   text-wrap: balance;
