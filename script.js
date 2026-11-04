@@ -35,7 +35,11 @@ const $$ = (s, ctx = document) => [...ctx.querySelectorAll(s)];
 /* ===== SERVICE WORKER ===== */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(registration => {
+        registration.update();
+      })
+      .catch(() => {});
   });
 }
 
@@ -83,7 +87,7 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
         const blob = await response.blob();
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = link.download || 'MD-Ismail-Hossen-CV.pdf';
+        downloadLink.download = link.download || 'MBI-Dark-CV.pdf';
         document.body.appendChild(downloadLink);
         downloadLink.click();
         downloadLink.remove();
@@ -118,6 +122,15 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   let mx = -200, my = -200;
   let rx = -200, ry = -200;
+  let cursorFrame = 0;
+  const cursorPositions = ['0%', '50%', '100%'];
+  ring.style.backgroundPosition = cursorPositions[0];
+
+  setInterval(() => {
+    if (!enabled || document.hidden) return;
+    cursorFrame = (cursorFrame + 1) % cursorPositions.length;
+    ring.style.backgroundPosition = cursorPositions[cursorFrame];
+  }, 90);
 
   document.addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse' || !enabled) return;
@@ -411,83 +424,111 @@ $$('a[href^="#"]').forEach(a => {
 /* ===== PROJECTS ===== */
 (function initProjects() {
   const grid = $('#projects-grid');
-  const count = $('#project-count');
   if (!grid) return;
 
   let allProjects = [];
+  let activeFilter = 'all';
 
   const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   }[char]));
 
-  function cardHTML(p, idx) {
-    const catMap = { websites: 'Web project', apps: 'App', video: 'Video', youtube: 'Video', stories: 'Web project' };
-    const label  = catMap[p.category] || p.category;
-    const num    = String(idx + 1).padStart(2, '0');
-    const githubProject = Boolean(p.repo);
-    const previewSrc = escapeHTML(p.img || (p.repo ? `https://opengraph.githubassets.com/1/mbidark/${encodeURIComponent(p.repo)}` : 'logo.jpg'));
-    const tags   = (p.tags || []).map(t => `<span class="pc-tag">${escapeHTML(t)}</span>`).join('');
-    const ytIcon = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>`;
-    const extIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
-    const arrowIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`;
-    const linkIcon = p.category === 'youtube' ? ytIcon : extIcon;
+  function projectCategory(p) {
+    const text = [p.category, p.title, p.desc, ...(p.tags || [])].join(' ').toLowerCase();
+    const link = String(p.link || '').toLowerCase();
+    if (/(youtube|youtu\.be|facebook|fb\.com|instagram|tiktok|twitter|x\.com|linkedin|discord|whatsapp|telegram)/.test(link)) return 'social';
+    if (/(experiment|creative experiment|interactive|chat|template|gallery|emoji)/.test(text)) return 'experiment';
+    return 'web';
+  }
+
+  function projectPlatform(p) {
+    const link = String(p.link || '').toLowerCase();
+    const text = [p.title, p.desc, ...(p.tags || [])].join(' ').toLowerCase();
+    const platforms = [
+      [/youtu\.?be|youtube/, 'YT', '#ff0033'],
+      [/facebook|fb\.com/, 'FB', '#1877f2'],
+      [/instagram/, 'IG', '#e1306c'],
+      [/tiktok/, 'TIKTOK', '#25f4ee'],
+      [/twitter|x\.com/, 'X', '#8d97a6'],
+      [/linkedin/, 'LINKEDIN', '#0a66c2'],
+      [/discord/, 'DISCORD', '#5865f2'],
+      [/whatsapp/, 'WHATSAPP', '#25d366'],
+      [/telegram/, 'TELEGRAM', '#229ed9'],
+      [/github\.com|github\.io/, 'GITHUB', '#a5aab4'],
+      [/soundcloud/, 'SOUNDCLOUD', '#ff5500'],
+      [/spotify/, 'SPOTIFY', '#1db954'],
+      [/pinterest/, 'PINTEREST', '#e60023'],
+      [/reddit/, 'REDDIT', '#ff4500'],
+    ];
+    for (const [pattern, label, color] of platforms) {
+      if (pattern.test(link) || pattern.test(text)) return { label, color, slug: label.toLowerCase().replace(/\s+/g, '-') };
+    }
+    return { label: 'WEB', color: '#00d4ff', slug: 'web' };
+  }
+
+  function projectStatus(p) {
+    const explicit = String(p.status || '').toUpperCase();
+    if (['LIVE', 'BUILDING', 'PLANNED'].includes(explicit)) return explicit;
+    const link = String(p.link || '');
+    if (/^https:\/\/mbidark\.github\.io\//.test(link)) return 'LIVE';
+    if (/^https:\/\/youtu\.?be/.test(link)) return 'LIVE';
+    if (/^https:\/\/www\.youtube\.com\/(?!@mbi_boss)/.test(link)) return 'LIVE';
+    return 'SOURCE';
+  }
+
+  function projectIcon(p) {
+    const text = [p.title, p.desc, ...(p.tags || [])].join(' ').toLowerCase();
+    let body = '<path d="M8 12h8M12 8v8"/>';
+    if (/chat/.test(text)) body = '<path d="M5 6h14v10H9l-4 3V6Z"/><path d="M8 10h8M8 13h5"/>';
+    else if (/clock|time|waqt/.test(text)) body = '<circle cx="12" cy="12" r="7"/><path d="M12 8v5l3 2"/>';
+    else if (/music|audio|sound/.test(text)) body = '<path d="M9 18V7l9-2v11"/><circle cx="6" cy="18" r="3"/><circle cx="15" cy="16" r="3"/>';
+    else if (/video|film|youtube/.test(text)) body = '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="m10 9 5 3-5 3V9Z"/>';
+    else if (/calculator|hisab|finance|speed|prescription/.test(text)) body = '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 18h2M12 18h2M16 18h0"/>';
+    else if (/image|pdf|converter|gallery/.test(text)) body = '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="1.5"/><path d="m6 16 4-4 3 3 2-2 3 3"/>';
+    else if (/terminal|shell|code|template/.test(text)) body = '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 8 3 4-3 4M12 16h5"/>';
+    else if (/love|heart|surprise/.test(text)) body = '<path d="M12 20S4 15.5 4 9.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.5 12 20 12 20Z"/>';
+    else if (/game/.test(text)) body = '<rect x="3" y="8" width="18" height="10" rx="4"/><path d="M7 12v4M5 14h4M16 13h.01M18 15h.01"/>';
+    else if (/story|literature|fiction|book/.test(text)) body = '<path d="M4 5h6a2 2 0 0 1 2 2v12a3 3 0 0 0-3-3H4V5ZM20 5h-6a2 2 0 0 0-2 2v12a3 3 0 0 1 3-3h5V5Z"/>';
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+  }
+
+  function cardHTML(p) {
+    const status = projectStatus(p);
+    const category = projectCategory(p);
+    const platform = projectPlatform(p);
+    const icon = projectIcon(p);
+    const previewSrc = escapeHTML(p.img || 'https://i.postimg.cc/rF6jbHTC/mbiboss.jpg');
     return `
-      <article class="project-card glass tilt-card reveal showing${p.featured ? ' project-card--featured' : ''}${githubProject ? ' github-project' : ''}" data-cat="${escapeHTML(p.category)}">
-        <div class="pc-img-wrap">
-          <img src="${previewSrc}" alt="${escapeHTML(p.title)} project preview" loading="lazy" onerror="this.onerror=null;this.src='logo.jpg'" />
-          <div class="pc-img-overlay"></div>
-          <span class="pc-num">${num}</span>
-          <span class="pc-badge pc-badge--${escapeHTML(p.category)}">${escapeHTML(label)}</span>
-          ${p.featured ? '<span class="pc-featured-label">Featured</span>' : ''}
-          <a href="${escapeHTML(p.link)}" target="_blank" rel="noopener noreferrer" class="pc-quick-link" aria-label="Open ${escapeHTML(p.title)}">${linkIcon}</a>
-        </div>
-        <div class="pc-body">
-          <p class="pc-client">${escapeHTML(p.client || 'Independent project')} <span>·</span> ${escapeHTML(p.year || '')}</p>
-          <h4 class="pc-title">${escapeHTML(p.title)}</h4>
-          <p class="pc-desc">${escapeHTML(p.desc)}</p>
-          ${p.outcome ? `<p class="pc-outcome"><strong>Focus</strong> ${escapeHTML(p.outcome)}</p>` : ''}
-          <div class="pc-tags">${tags}</div>
-          <div class="pc-footer">
-            <div class="pc-meta">
-              <span class="pc-role">${escapeHTML(p.role || 'Creator')}</span>
-              <span class="pc-dot">·</span>
-              <span class="pc-year">${escapeHTML(p.year || '')}</span>
-            </div>
-            <a href="${escapeHTML(p.link)}" target="_blank" rel="noopener noreferrer" class="pc-cta">
-              View ${arrowIcon}
-            </a>
-          </div>
-        </div>
-        <div class="pc-glow-border"></div>
-      </article>`;
+      <a class="project-circle reveal showing" href="${escapeHTML(p.link)}" target="_blank" rel="noopener noreferrer" data-category="${category}" data-platform="${platform.slug}" style="--platform-color:${platform.color}" aria-label="Open ${escapeHTML(p.title)}: ${escapeHTML(p.desc)}">
+        <span class="project-circle-thumb">
+          <img src="${previewSrc}" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://i.postimg.cc/rF6jbHTC/mbiboss.jpg'" />
+          <span class="project-circle-icon">${icon}</span>
+        </span>
+        <span class="project-platform">${platform.label}</span>
+        <span class="project-circle-status project-circle-status--${status.toLowerCase()}">${status}</span>
+        <span class="project-circle-name">${escapeHTML(p.title)}</span>
+        <span class="project-circle-desc">${escapeHTML(p.desc)}</span>
+      </a>`;
   }
 
   function render(filter) {
-    const filtered = filter === 'all' ? allProjects : allProjects.filter(p => p.category === filter);
-    grid.innerHTML = filtered.map((p, i) => cardHTML(p, i)).join('');
-    if (count) count.textContent = `${filtered.length} ${filtered.length === 1 ? 'project' : 'projects'}`;
+    activeFilter = filter;
+    const filtered = filter === 'all' ? allProjects : allProjects.filter(p => projectCategory(p) === filter);
+    grid.innerHTML = filtered.map(cardHTML).join('');
+    grid.classList.toggle('is-filtered', filter !== 'all');
 
-    $$('.tilt-card', grid).forEach(card => {
-      if (matchMedia('(hover: none), (pointer: coarse)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      card.addEventListener('mousemove', (e) => {
-        const r  = card.getBoundingClientRect();
-        const rx = ((e.clientY - r.top)  / r.height - 0.5) * -10;
-        const ry = ((e.clientX - r.left) / r.width  - 0.5) *  10;
-        card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.015)`;
-      });
-      card.addEventListener('mouseleave', () => card.style.transform = '');
-    });
-
-    const io = new IntersectionObserver(entries => {
-      entries.forEach((e, i) => {
-        if (e.isIntersecting) {
-          e.target.style.transitionDelay = (i * 0.06) + 's';
-          e.target.classList.add('visible');
-          io.unobserve(e.target);
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.1 });
-    $$('.reveal', grid).forEach(el => io.observe(el));
+    }, { threshold: 0.1 }) : null;
+    $$('.project-circle', grid).forEach(el => {
+      if (io) io.observe(el);
+      else el.classList.add('visible');
+    });
   }
 
   function bindFilters() {
@@ -510,7 +551,6 @@ $$('a[href^="#"]').forEach(a => {
       bindFilters();
     })
     .catch(() => {
-      if (count) count.textContent = 'Unavailable';
       grid.innerHTML = '<p class="projects-empty">Could not load projects right now.</p>';
     });
 })();

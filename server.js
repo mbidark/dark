@@ -42,7 +42,7 @@ const server = http.createServer((req, res) => {
     const contentType = mimeTypes[ext] || 'application/octet-stream';
 
     const headers = { 'Content-Type': contentType };
-    if (ext === '.pdf') headers['Content-Disposition'] = 'attachment; filename="MD-Ismail-Hossen-CV.pdf"';
+    if (ext === '.pdf') headers['Content-Disposition'] = 'attachment; filename="MBI-Dark-CV.pdf"';
     res.writeHead(200, headers);
     fs.createReadStream(filePath).pipe(res);
   });
