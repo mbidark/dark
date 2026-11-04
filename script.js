@@ -79,12 +79,16 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 (function initCvDownload() {
   $$('a[download][href$=".pdf"]').forEach(link => {
     link.addEventListener('click', async (event) => {
-      if (!window.fetch || !window.URL || !window.URL.createObjectURL) return;
       event.preventDefault();
       try {
         const response = await fetch(link.href);
         if (!response.ok) throw new Error('CV request failed');
+        if (!window.URL || !window.URL.createObjectURL) {
+          window.location.assign(link.href);
+          return;
+        }
         const blob = await response.blob();
+        if (!blob.size || blob.type === 'text/html') throw new Error('Invalid CV file');
         const downloadLink = document.createElement('a');
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.download = link.download || 'MBI-Dark-CV.pdf';
@@ -93,7 +97,19 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
         downloadLink.remove();
         setTimeout(() => URL.revokeObjectURL(downloadLink.href), 1000);
       } catch {
-        window.location.href = link.href;
+        let notice = $('#cv-notice');
+        if (!notice) {
+          notice = document.createElement('div');
+          notice.id = 'cv-notice';
+          notice.className = 'cv-notice';
+          notice.setAttribute('role', 'status');
+          notice.setAttribute('aria-live', 'polite');
+          notice.textContent = 'The CV file is being prepared. Please try again after upload.';
+          document.body.appendChild(notice);
+        }
+        notice.classList.add('visible');
+        clearTimeout(notice.hideTimer);
+        notice.hideTimer = setTimeout(() => notice.classList.remove('visible'), 4200);
       }
     });
   });
