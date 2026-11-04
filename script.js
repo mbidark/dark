@@ -15,17 +15,21 @@ const $$ = (s, ctx = document) => [...ctx.querySelectorAll(s)];
   const num     = $('#preloader-num');
   if (!overlay) return;
 
-  let pct = 0;
+  const isLowPower = (navigator.hardwareConcurrency || 4) <= 4 || (navigator.deviceMemory || 4) <= 2;
+  const intervalMs = isLowPower ? 55 : 70;
+  let pct = isLowPower ? 35 : 0;
+  bar.style.width = pct + '%';
+  num.textContent = pct;
   const interval = setInterval(() => {
-    pct = Math.min(pct + (Math.random() * 14 + 4), 100);
+    pct = Math.min(pct + (isLowPower ? 16 : 20), 100);
     bar.style.width = pct + '%';
-    num.textContent  = Math.round(pct);
+    num.textContent = Math.round(pct);
     if (pct >= 100) {
       clearInterval(interval);
-      setTimeout(() => overlay.classList.add('hidden'), 350);
-      setTimeout(() => overlay.remove(), 1300);
+      setTimeout(() => overlay.classList.add('hidden'), 120);
+      setTimeout(() => overlay.remove(), 700);
     }
-  }, 110);
+  }, intervalMs);
 })();
 
 /* ===== SERVICE WORKER ===== */
@@ -153,13 +157,27 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
   const COLORS = ['#00d4ff', '#7c3aed', '#ffffff', '#ffd700'];
 
   function resize() {
-    w = canvas.width  = window.innerWidth;
-    h = canvas.height = window.innerHeight;
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowPower = (navigator.hardwareConcurrency || 4) <= 4 || (navigator.deviceMemory || 4) <= 2;
+    const dpr = reducedMotion ? 1 : Math.min(window.devicePixelRatio || 1, lowPower ? 1 : 1.5);
+    w = canvas.clientWidth || window.innerWidth;
+    h = canvas.clientHeight || window.innerHeight;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     spawn();
   }
 
   function spawn() {
-    const count = Math.min(Math.floor((w * h) / 14000), 130);
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowPower = (navigator.hardwareConcurrency || 4) <= 4 || (navigator.deviceMemory || 4) <= 2;
+    if (reducedMotion) {
+      particles = [];
+      return;
+    }
+    const areaLimit = lowPower ? 28000 : 18000;
+    const maxParticles = lowPower ? 45 : 90;
+    const count = Math.min(Math.floor((w * h) / areaLimit), maxParticles);
     particles = Array.from({ length: count }, () => ({
       x:  Math.random() * w,
       y:  Math.random() * h,
@@ -171,7 +189,18 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
     }));
   }
 
-  function tick() {
+  let lastFrame = 0;
+  let refreshInterval = 1000 / 60;
+  try {
+    refreshInterval = 1000 / (matchMedia('(update: 120)').matches ? 120 : 60);
+  } catch {}
+
+  function tick(now = 0) {
+    if (document.hidden || now - lastFrame < refreshInterval) {
+      requestAnimationFrame(tick);
+      return;
+    }
+    lastFrame = now;
     ctx.clearRect(0, 0, w, h);
 
     for (let i = 0; i < particles.length; i++) {
@@ -332,6 +361,7 @@ $$('a[href^="#"]').forEach(a => {
 
 /* ===== TILT CARDS ===== */
 (function initTilt() {
+  if (matchMedia('(hover: none), (pointer: coarse)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   $$('.tilt-card').forEach(card => {
     card.addEventListener('mousemove', (e) => {
       const r = card.getBoundingClientRect();
@@ -391,18 +421,20 @@ $$('a[href^="#"]').forEach(a => {
   }[char]));
 
   function cardHTML(p, idx) {
-    const catMap = { websites: 'Website', youtube: 'YouTube', stories: 'Story' };
+    const catMap = { websites: 'Web project', apps: 'App', video: 'Video', youtube: 'Video', stories: 'Web project' };
     const label  = catMap[p.category] || p.category;
     const num    = String(idx + 1).padStart(2, '0');
+    const githubProject = Boolean(p.repo);
+    const previewSrc = escapeHTML(p.img || (p.repo ? `https://opengraph.githubassets.com/1/mbidark/${encodeURIComponent(p.repo)}` : 'logo.jpg'));
     const tags   = (p.tags || []).map(t => `<span class="pc-tag">${escapeHTML(t)}</span>`).join('');
     const ytIcon = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg>`;
     const extIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
     const arrowIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`;
     const linkIcon = p.category === 'youtube' ? ytIcon : extIcon;
     return `
-      <article class="project-card glass tilt-card reveal showing${p.featured ? ' project-card--featured' : ''}" data-cat="${escapeHTML(p.category)}">
+      <article class="project-card glass tilt-card reveal showing${p.featured ? ' project-card--featured' : ''}${githubProject ? ' github-project' : ''}" data-cat="${escapeHTML(p.category)}">
         <div class="pc-img-wrap">
-          <img src="${escapeHTML(p.img)}" alt="${escapeHTML(p.title)} project preview" loading="lazy" />
+          <img src="${previewSrc}" alt="${escapeHTML(p.title)} project preview" loading="lazy" onerror="this.onerror=null;this.src='logo.jpg'" />
           <div class="pc-img-overlay"></div>
           <span class="pc-num">${num}</span>
           <span class="pc-badge pc-badge--${escapeHTML(p.category)}">${escapeHTML(label)}</span>
@@ -436,6 +468,7 @@ $$('a[href^="#"]').forEach(a => {
     if (count) count.textContent = `${filtered.length} ${filtered.length === 1 ? 'project' : 'projects'}`;
 
     $$('.tilt-card', grid).forEach(card => {
+      if (matchMedia('(hover: none), (pointer: coarse)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       card.addEventListener('mousemove', (e) => {
         const r  = card.getBoundingClientRect();
         const rx = ((e.clientY - r.top)  / r.height - 0.5) * -10;
@@ -494,6 +527,38 @@ $$('a[href^="#"]').forEach(a => {
     const text    = encodeURIComponent(`🌸From Dark Portfolio...\n>>${name}\n>>${email}\n>>${message}`);
     window.open(`https://wa.me/8801317460865?text=${text}`, '_blank');
   });
+})();
+
+/* ===== GITHUB PROFILE ===== */
+(function initGitHubProfile() {
+  const githubCard = $('#github-profile');
+  if (!githubCard) return;
+  fetch('https://api.github.com/users/mbidark')
+    .then(response => response.ok ? response.json() : Promise.reject())
+    .then(profile => {
+      const setText = (selector, value) => {
+        const el = githubCard.querySelector(selector);
+        if (el && value) el.textContent = value;
+      };
+      setText('[data-github-name]', profile.name || 'MBI BOSS');
+      setText('[data-github-bio]', profile.bio || 'Creator, developer, and filmmaker.');
+      setText('[data-github-location]', profile.location || 'Bangladesh');
+      setText('[data-github-repos]', `${profile.public_repos || 0}+`);
+      setText('[data-github-company]', profile.company || 'Dark Host');
+      setText('[data-github-followers]', profile.followers || 0);
+      setText('[data-github-following]', profile.following || 0);
+      const avatar = githubCard.querySelector('[data-github-avatar]');
+      if (avatar && profile.avatar_url) avatar.src = profile.avatar_url;
+
+      fetch('https://api.github.com/users/mbidark/repos?per_page=100&sort=updated')
+        .then(response => response.ok ? response.json() : Promise.reject())
+        .then(repos => {
+          const stars = repos.reduce((total, repo) => total + (repo.stargazers_count || 0), 0);
+          setText('[data-github-stars]', stars);
+        })
+        .catch(() => {});
+    })
+    .catch(() => {});
 })();
 
 /* ===== KONAMI CODE ===== */

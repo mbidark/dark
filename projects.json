@@ -14,7 +14,7 @@
   },
   {
     "title": "Chaya",
-    "category": "youtube",
+    "category": "video",
     "img": "https://i.postimg.cc/brF6cbDd/Chaya.jpg",
     "link": "https://youtu.be/AyaMDqDxkII",
     "desc": "A spine-chilling ghost series on YouTube exploring the supernatural through masterful cinematography and immersive storytelling.",
@@ -26,7 +26,7 @@
   },
   {
     "title": "Bissash",
-    "category": "stories",
+    "category": "websites",
     "img": "https://i.postimg.cc/SRhxGb8L/Bissash-wide.png",
     "link": "https://mbiboss.github.io/Golpo/?story=bissash",
     "desc": "A deeply emotional narrative about trust, faith, and the bonds that hold us together — told through vivid, poetic prose.",
@@ -38,7 +38,7 @@
   },
   {
     "title": "Bekar Golpo",
-    "category": "youtube",
+    "category": "video",
     "img": "https://i.postimg.cc/W4hLc6BN/Bekar-Golpo.jpg",
     "link": "https://www.youtube.com/@Bekar_Golpo",
     "desc": "A collaborative YouTube channel delivering creative short films, sketches, and stories that resonate with the everyday Bengali audience.",
@@ -50,7 +50,7 @@
   },
   {
     "title": "MBI_BOSS",
-    "category": "youtube",
+    "category": "video",
     "img": "https://i.postimg.cc/rF6jbHTC/mbiboss.jpg",
     "link": "https://www.youtube.com/@mbi_boss",
     "desc": "My personal YouTube channel — a creative canvas for experimental videos, vlogs, and unfiltered expressions of art and imagination.",
@@ -62,7 +62,7 @@
   },
   {
     "title": "Dark CLC",
-    "category": "websites",
+    "category": "apps",
     "img": "https://i.postimg.cc/rwGztcsR/Dark-CLC.png",
     "link": "https://mbiboss.github.io/Dark-CLC/",
     "desc": "A sleek, professional calculator web app with a dark aesthetic, smooth interactions, and precision engineering for everyday computation.",
@@ -71,5 +71,22 @@
     "year": "2023",
     "client": "MBI Dark",
     "outcome": "A fast, focused utility designed for everyday use."
-  }
+  },
+  {"title":"DARK-NOVA","category":"websites","repo":"DARK-NOVA","link":"https://mbidark.github.io/DARK-NOVA/","desc":"A multi-format image and PDF conversion workspace with live preview and high-quality output.","tags":["HTML","Image Tools","PDF"],"role":"Creator & Developer","year":"2026","client":"GitHub","outcome":"Browser-based media conversion tools."},
+  {"title":"Dark-chat","category":"websites","repo":"Dark-chat","link":"https://mbidark.github.io/Dark-chat/","desc":"A browser-based chat interface built as an interactive web experiment.","tags":["JavaScript","Chat","UI"],"role":"Creator & Developer","year":"2026","client":"GitHub","outcome":"A lightweight real-time chat concept."},
+  {"title":"Love Surprise","category":"websites","repo":"Love-surprise","link":"https://mbidark.github.io/Love-surprise/","desc":"A personalized surprise experience built for the browser.","tags":["JavaScript","Interactive","Web"],"role":"Designer & Developer","year":"2026","client":"GitHub","outcome":"An interactive personal web experience."},
+  {"title":"Dark Portfolio","category":"websites","repo":"dark","link":"https://mbidark.github.io/dark/","desc":"A professional portfolio and project showcase for MBI Dark.","tags":["Portfolio","HTML","CSS"],"role":"Designer & Developer","year":"2026","client":"GitHub","outcome":"A responsive creative portfolio."},
+  {"title":"Darkpass","category":"apps","repo":"darkpass","link":"https://mbidark.github.io/darkpass/","desc":"A browser utility project published on GitHub Pages.","tags":["HTML","Utility","Web App"],"role":"Creator & Developer","year":"2026","client":"GitHub","outcome":"A focused browser utility."},
+  {"title":"Dark Clock","category":"apps","repo":"clock","link":"https://mbidark.github.io/clock/","desc":"A digital clock with a polished flip animation interface.","tags":["JavaScript","Animation","Clock"],"role":"Designer & Developer","year":"2026","client":"GitHub","outcome":"An animated browser time display."},
+  {"title":"Noor Al Waqt","category":"apps","repo":"noor-al-waqt","link":"https://mbidark.github.io/noor-al-waqt/","desc":"A time-focused JavaScript application with an elegant interface.","tags":["JavaScript","Time","UI"],"role":"Creator & Developer","year":"2026","client":"GitHub","outcome":"A compact utility experience."},
+  {"title":"Termux Theme","category":"apps","repo":"Termux-theme","link":"https://github.com/mbidark/Termux-theme","desc":"A Shell-based terminal theme and customization project.","tags":["Shell","Termux","Terminal"],"role":"Creator","year":"2026","client":"GitHub","outcome":"Terminal environment customization."},
+  {"title":"Emoji","category":"websites","repo":"emoji","link":"https://github.com/mbidark/emoji","desc":"An emoji-related web experiment maintained on GitHub.","tags":["Web","Creative","Emoji"],"role":"Creator","year":"2026","client":"GitHub","outcome":"A small creative web utility."},
+  {"title":"Dark Speed Meter","category":"apps","repo":"DarkSpeedMeter","link":"https://mbiboss.github.io/DarkSpeedMeter/","desc":"A browser speed measurement utility with a dark visual style.","tags":["HTML","Utility","Speed"],"role":"Designer & Developer","year":"2026","client":"GitHub","outcome":"A simple performance utility."},
+  {"title":"Sinu Gallery","category":"websites","repo":"Sinu","link":"https://github.com/mbidark/Sinu","desc":"A gallery project designed around visual presentation.","tags":["Gallery","Web","Visual"],"role":"Designer & Developer","year":"2026","client":"GitHub","outcome":"A visual gallery concept."},
+  {"title":"YT View","category":"apps","repo":"Yt-view","link":"https://mbiboss.github.io/Yt-view/","desc":"A focused YouTube viewing and testing interface.","tags":["HTML","YouTube","Web App"],"role":"Creator & Developer","year":"2026","client":"GitHub","outcome":"A video interface experiment."},
+  {"title":"Prescription Maker","category":"apps","repo":"prescription","link":"https://mbiboss.github.io/prescription/","desc":"A browser tool for creating styled prescription documents.","tags":["CSS","Utility","Form"],"role":"Designer & Developer","year":"2026","client":"GitHub","outcome":"A document-generation utility."},
+  {"title":"Partner","category":"websites","repo":"Partner","link":"https://mbiboss.github.io/Partner/","desc":"A browser-based partnership or relationship-themed web project.","tags":["HTML","Web","Personal"],"role":"Creator & Developer","year":"2026","client":"GitHub","outcome":"A focused web experience."},
+  {"title":"Durable Chat Template","category":"apps","repo":"durable-chat-template","link":"https://github.com/mbidark/durable-chat-template","desc":"A TypeScript chat template designed for a durable application structure.","tags":["TypeScript","Chat","Template"],"role":"Developer","year":"2025","client":"GitHub","outcome":"A reusable chat application foundation."},
+  {"title":"Hisab","category":"apps","repo":"Hisab","link":"https://mbiboss.github.io/Hisab/","desc":"A browser-based calculation and account management utility.","tags":["JavaScript","Finance","Utility"],"role":"Creator & Developer","year":"2025","client":"GitHub","outcome":"A practical daily calculation tool."},
+  {"title":"Mystic Hands by Sadiya","category":"websites","repo":"Mystic-Hands-by-Sadiya","link":"https://mbiboss.github.io/Mystic-Hands-by-Sadiya/","desc":"A visual website project created for Mystic Hands by Sadiya.","tags":["CSS","Portfolio","Web"],"role":"Designer & Developer","year":"2025","client":"GitHub","outcome":"A tailored creative website."}
 ]
