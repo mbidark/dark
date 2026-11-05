@@ -75,46 +75,6 @@ if ('serviceWorker' in navigator) {
 const yearEl = $('#year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-/* ===== CV DOWNLOAD ===== */
-(function initCvDownload() {
-  $$('a[download][href$=".pdf"]').forEach(link => {
-    link.addEventListener('click', async (event) => {
-      event.preventDefault();
-      try {
-        const response = await fetch(link.href);
-        if (!response.ok) throw new Error('CV request failed');
-        if (!window.URL || !window.URL.createObjectURL) {
-          window.location.assign(link.href);
-          return;
-        }
-        const blob = await response.blob();
-        if (!blob.size || blob.type === 'text/html') throw new Error('Invalid CV file');
-        const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = link.download || 'MBI-Dark-CV.pdf';
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        downloadLink.remove();
-        setTimeout(() => URL.revokeObjectURL(downloadLink.href), 1000);
-      } catch {
-        let notice = $('#cv-notice');
-        if (!notice) {
-          notice = document.createElement('div');
-          notice.id = 'cv-notice';
-          notice.className = 'cv-notice';
-          notice.setAttribute('role', 'status');
-          notice.setAttribute('aria-live', 'polite');
-          notice.textContent = 'The CV file is being prepared. Please try again after upload.';
-          document.body.appendChild(notice);
-        }
-        notice.classList.add('visible');
-        clearTimeout(notice.hideTimer);
-        notice.hideTimer = setTimeout(() => notice.classList.remove('visible'), 4200);
-      }
-    });
-  });
-})();
-
 /* ===== CUSTOM CURSOR ===== */
 (function initCursor() {
   const ring = $('#cursor-ring');
@@ -444,10 +404,95 @@ $$('a[href^="#"]').forEach(a => {
 
   let allProjects = [];
   let activeFilter = 'all';
+  const menuList = document.getElementById('projectMenuList');
+  const recentList = document.getElementById('recentProjects');
+  const menuToggle = document.getElementById('projectMenuToggle');
+  const menuClose = document.getElementById('projectMenuClose');
+  const projectMenu = document.getElementById('projectMenu');
+  const projectMenuSearch = document.getElementById('projectMenuSearch');
+  const RECENT_KEY = 'mbiDarkRecentProjects';
+  let projectSearchQuery = '';
 
   const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   }[char]));
+
+  function getRecentProjects() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      return Array.isArray(stored) ? stored.filter(Boolean).slice(0, 3) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function rememberProject(project) {
+    const recent = getRecentProjects().filter(link => link !== project.link);
+    recent.unshift(project.link);
+    try {
+      localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, 3)));
+    } catch {
+      // Recent projects remain available for the current session when storage is unavailable.
+    }
+    renderProjectMenu(activeFilter);
+  }
+
+  function projectMenuItemHTML(project, recent = false) {
+    const platform = projectPlatform(project);
+    const status = projectStatus(project);
+    return `
+      <a class="project-menu-item${recent ? ' project-menu-item--recent' : ''}" href="${escapeHTML(project.link)}" target="_blank" rel="noopener noreferrer" data-project-link="${escapeHTML(project.link)}">
+        <span class="project-menu-dot" style="--platform-color:${platform.color}" aria-hidden="true"></span>
+        <span class="project-menu-copy">
+          <strong>${escapeHTML(project.title)}</strong>
+          <small>${escapeHTML(platform.label)} · ${escapeHTML(status)}</small>
+        </span>
+        <span class="project-menu-arrow" aria-hidden="true">↗</span>
+      </a>`;
+  }
+
+  function renderProjectMenu(filter) {
+    if (!menuList || !recentList) return;
+    const filtered = filter === 'all' ? allProjects : allProjects.filter(p => projectCategory(p) === filter);
+    const normalizedQuery = projectSearchQuery.trim().toLowerCase();
+    const searchable = project => [project.title, project.desc, project.category, ...(project.tags || [])]
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedQuery);
+    const sortedFiltered = filtered
+      .filter(searchable)
+      .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+    menuList.innerHTML = sortedFiltered.length
+      ? sortedFiltered.map(project => projectMenuItemHTML(project)).join('')
+      : '<p class="project-menu-empty">No projects found.</p>';
+
+    const recentLinks = getRecentProjects();
+    const recentProjects = recentLinks.map(link => allProjects.find(project => project.link === link)).filter(Boolean);
+    recentList.innerHTML = recentProjects.length
+      ? `<div class="recent-projects-label"><span>RECENT</span><small>${recentProjects.length}</small></div>${recentProjects.map(project => projectMenuItemHTML(project, true)).join('')}`
+      : '';
+
+    $$('.project-menu-item', projectMenu).forEach(link => {
+      link.addEventListener('click', () => {
+        const project = allProjects.find(item => item.link === link.dataset.projectLink);
+        if (project) rememberProject(project);
+        if (window.innerWidth <= 768) closeProjectMenu();
+      });
+    });
+  }
+
+  function openProjectMenu() {
+    if (!projectMenu || !menuToggle) return;
+    projectMenu.classList.add('open');
+    menuToggle.setAttribute('aria-expanded', 'true');
+    menuClose?.focus();
+  }
+
+  function closeProjectMenu() {
+    if (!projectMenu || !menuToggle) return;
+    projectMenu.classList.remove('open');
+    menuToggle.setAttribute('aria-expanded', 'false');
+  }
 
   function projectCategory(p) {
     const text = [p.category, p.title, p.desc, ...(p.tags || [])].join(' ').toLowerCase();
@@ -508,30 +553,35 @@ $$('a[href^="#"]').forEach(a => {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
   }
 
-  function cardHTML(p) {
-    const status = projectStatus(p);
+  function cardHTML(p, index) {
     const category = projectCategory(p);
     const platform = projectPlatform(p);
-    const icon = projectIcon(p);
-    const previewSrc = escapeHTML(p.img || 'https://i.postimg.cc/rF6jbHTC/mbiboss.jpg');
+    const ring = index % 4;
+    const speed = [18, 24, 32, 40][ring];
+    const delay = -(index * 1.35);
+    const isGenericGithubImage = p.repo && /mbiboss\.jpg/i.test(String(p.img || ''));
+    const owner = String(p.link || '').includes('mbiboss.github.io') ? 'mbiboss' : 'mbidark';
+    const imageURL = escapeHTML(
+      isGenericGithubImage && p.repo
+        ? `https://opengraph.githubassets.com/1/${owner}/${p.repo}`
+        : p.img || 'https://avatars.githubusercontent.com/u/122667057?v=4'
+    );
     return `
-      <a class="project-circle reveal showing" href="${escapeHTML(p.link)}" target="_blank" rel="noopener noreferrer" data-category="${category}" data-platform="${platform.slug}" style="--platform-color:${platform.color}" aria-label="Open ${escapeHTML(p.title)}: ${escapeHTML(p.desc)}">
-        <span class="project-circle-thumb">
-          <img src="${previewSrc}" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://i.postimg.cc/rF6jbHTC/mbiboss.jpg'" />
-          <span class="project-circle-icon">${icon}</span>
-        </span>
-        <span class="project-platform">${platform.label}</span>
-        <span class="project-circle-status project-circle-status--${status.toLowerCase()}">${status}</span>
-        <span class="project-circle-name">${escapeHTML(p.title)}</span>
-        <span class="project-circle-desc">${escapeHTML(p.desc)}</span>
-      </a>`;
+      <div class="project-orbit" style="--ring:${ring};--speed:${speed}s;--delay:${delay}s">
+        <a class="project-circle reveal showing" href="${escapeHTML(p.link)}" target="_blank" rel="noopener noreferrer" data-category="${category}" data-platform="${platform.slug}" data-project-link="${escapeHTML(p.link)}" data-title="${escapeHTML(p.title)}" style="--platform-color:${platform.color}" aria-label="Open ${escapeHTML(p.title)}: ${escapeHTML(p.desc)}">
+          <span class="project-circle-logo" aria-hidden="true">
+            <img src="${imageURL}" alt="" loading="lazy" onerror="this.onerror=null;this.src='https://avatars.githubusercontent.com/u/122667057?v=4'" />
+          </span>
+        </a>
+      </div>`;
   }
 
   function render(filter) {
     activeFilter = filter;
     const filtered = filter === 'all' ? allProjects : allProjects.filter(p => projectCategory(p) === filter);
-    grid.innerHTML = filtered.map(cardHTML).join('');
+    grid.innerHTML = '<span class="orbit-ring orbit-ring--1"></span><span class="orbit-ring orbit-ring--2"></span><span class="orbit-ring orbit-ring--3"></span><span class="orbit-ring orbit-ring--4"></span>' + filtered.map((project, index) => cardHTML(project, index, filtered.length)).join('');
     grid.classList.toggle('is-filtered', filter !== 'all');
+    renderProjectMenu(filter);
 
     const io = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
       entries.forEach(entry => {
@@ -544,6 +594,10 @@ $$('a[href^="#"]').forEach(a => {
     $$('.project-circle', grid).forEach(el => {
       if (io) io.observe(el);
       else el.classList.add('visible');
+      el.addEventListener('click', () => {
+        const project = allProjects.find(item => item.link === el.dataset.projectLink);
+        if (project) rememberProject(project);
+      });
     });
   }
 
@@ -556,6 +610,42 @@ $$('a[href^="#"]').forEach(a => {
         btn.setAttribute('aria-pressed', 'true');
         render(btn.dataset.filter);
       });
+    });
+  }
+
+  $$('.project-circle', grid).forEach(link => {
+    link.addEventListener('click', () => {
+      const project = allProjects.find(item => item.link === link.dataset.projectLink);
+      if (project) rememberProject(project);
+    });
+  });
+
+  menuToggle?.addEventListener('click', () => {
+    projectMenu.classList.contains('open') ? closeProjectMenu() : openProjectMenu();
+  });
+  menuClose?.addEventListener('click', closeProjectMenu);
+  projectMenuSearch?.addEventListener('input', event => {
+    projectSearchQuery = event.target.value;
+    renderProjectMenu(activeFilter);
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeProjectMenu();
+    if (event.key === '/' && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName || '')) {
+      event.preventDefault();
+      if (window.innerWidth <= 768) openProjectMenu();
+      projectMenuSearch?.focus();
+    }
+  });
+
+  const orbitPauseBtn = document.getElementById('orbitPauseBtn');
+  if (orbitPauseBtn) {
+    orbitPauseBtn.addEventListener('click', () => {
+      const paused = grid.classList.toggle('orbits-paused');
+      orbitPauseBtn.classList.toggle('paused', paused);
+      orbitPauseBtn.setAttribute('aria-pressed', String(paused));
+      orbitPauseBtn.title = paused ? 'Play orbit' : 'Pause orbit';
+      orbitPauseBtn.querySelector('.orbit-pause-icon').textContent = paused ? '▶' : 'Ⅱ';
+      orbitPauseBtn.querySelector('.orbit-pause-text').textContent = paused ? 'Play' : 'Pause';
     });
   }
 

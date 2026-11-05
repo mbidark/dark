@@ -70,15 +70,47 @@
     <!-- PROJECTS -->
     <section id="projects" class="section projects-section">
       <div class="container">
-        <div class="filter-btns reveal" role="group" aria-label="Filter projects">
-          <button class="filter-btn active" data-filter="all" aria-pressed="true">ALL PROJECTS</button>
-          <button class="filter-btn" data-filter="web" aria-pressed="false">WEB</button>
-          <button class="filter-btn" data-filter="social" aria-pressed="false">SOCIAL</button>
-          <button class="filter-btn" data-filter="experiment" aria-pressed="false">EXPERIMENT</button>
+        <div class="projects-toolbar reveal">
+          <div class="filter-btns" role="group" aria-label="Filter projects">
+            <button class="filter-btn active" data-filter="all" aria-pressed="true">ALL PROJECTS</button>
+            <button class="filter-btn" data-filter="web" aria-pressed="false">WEB</button>
+            <button class="filter-btn" data-filter="social" aria-pressed="false">SOCIAL</button>
+            <button class="filter-btn" data-filter="experiment" aria-pressed="false">EXPERIMENT</button>
+          </div>
+          <button id="projectMenuToggle" class="project-menu-toggle" type="button" aria-expanded="false" aria-controls="projectMenu">
+            <span aria-hidden="true">☰</span>
+            <span>Projects</span>
+          </button>
+          <button id="orbitPauseBtn" class="orbit-pause-btn" type="button" aria-pressed="false" title="Pause orbit">
+            <span class="orbit-pause-icon" aria-hidden="true">Ⅱ</span>
+            <span class="orbit-pause-text">Pause</span>
+          </button>
         </div>
 
-        <div class="projects-grid" id="projects-grid">
-          <!-- Injected by JS -->
+        <div class="projects-explorer">
+          <aside class="project-menu" id="projectMenu" aria-label="Project directory">
+            <div class="project-menu-heading">
+              <div>
+                <span class="section-tag">// DIRECTORY</span>
+                <h2>Projects</h2>
+              </div>
+              <button id="projectMenuClose" class="project-menu-close" type="button" aria-label="Close project menu">×</button>
+            </div>
+            <div class="recent-projects" id="recentProjects"></div>
+            <label class="project-menu-search" for="projectMenuSearch">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="6"></circle>
+                <path d="m16 16 4 4"></path>
+              </svg>
+              <input id="projectMenuSearch" type="search" placeholder="Search projects" autocomplete="off" />
+              <kbd>/</kbd>
+            </label>
+            <nav class="project-menu-list" id="projectMenuList" aria-label="All projects"></nav>
+          </aside>
+
+          <div class="projects-grid" id="projects-grid">
+            <!-- Injected by JS -->
+          </div>
         </div>
         <div class="projects-coming-soon" aria-label="More projects coming soon">
           <span></span>
