@@ -1,4 +1,4 @@
-const CACHE = 'mbi-dark-v4';
+const CACHE = 'mbi-dark-v5';
 const ASSETS = [
   './',
   './index.html',

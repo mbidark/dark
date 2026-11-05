@@ -75,6 +75,34 @@ if ('serviceWorker' in navigator) {
 const yearEl = $('#year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+/* ===== CV DOWNLOAD ===== */
+(function initCvDownload() {
+  $$('a[download][href$=".pdf"]').forEach(link => {
+    link.addEventListener('click', async event => {
+      event.preventDefault();
+      const filename = link.getAttribute('download') || 'MBI-Dark-CV.pdf';
+
+      try {
+        const response = await fetch(link.href);
+        if (!response.ok) throw new Error('CV request failed');
+        const blob = await response.blob();
+        if (!blob.size || blob.type === 'text/html') throw new Error('Invalid CV file');
+
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch {
+        window.location.assign(link.href);
+      }
+    });
+  });
+})();
+
 /* ===== CUSTOM CURSOR ===== */
 (function initCursor() {
   const ring = $('#cursor-ring');
