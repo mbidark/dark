@@ -23,18 +23,28 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-  let urlPath = req.url.split('?')[0];
-
-  if (urlPath === '/') {
-    urlPath = '/index.html';
+  let urlPath;
+  try {
+    urlPath = decodeURIComponent(req.url.split('?')[0]);
+  } catch {
+    res.writeHead(400, { 'Content-Type': 'text/plain' });
+    res.end('400 Bad Request');
+    return;
   }
 
-  const filePath = path.join(__dirname, urlPath);
+  if (urlPath === '/') urlPath = '/index.html';
+
+  const filePath = path.resolve(__dirname, `.${urlPath}`);
+  if (filePath !== __dirname && !filePath.startsWith(`${__dirname}${path.sep}`)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('403 Forbidden');
+    return;
+  }
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('404 Not Found');
+      res.writeHead(404, { 'Content-Type': 'text/html' });
+      fs.createReadStream(path.join(__dirname, '404.html')).pipe(res);
       return;
     }
 
@@ -42,7 +52,6 @@ const server = http.createServer((req, res) => {
     const contentType = mimeTypes[ext] || 'application/octet-stream';
 
     const headers = { 'Content-Type': contentType };
-    if (ext === '.pdf') headers['Content-Disposition'] = 'attachment; filename="MBI-Dark-CV.pdf"';
     res.writeHead(200, headers);
     fs.createReadStream(filePath).pipe(res);
   });
