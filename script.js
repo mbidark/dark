@@ -105,58 +105,36 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 /* ===== CUSTOM CURSOR ===== */
 (function initCursor() {
-  const ring = $('#cursor-ring');
-  const dot  = $('#cursor-dot');
-  if (!ring || !dot) return;
+  const cursor = $('#cursor-ring');
+  if (!cursor) return;
 
   let enabled = false;
-  const enableForMouse = (e) => {
-    if (e.pointerType !== 'mouse') return;
+  document.addEventListener('pointermove', (event) => {
+    if (event.pointerType !== 'mouse') {
+      enabled = false;
+      document.documentElement.classList.remove('cursor-enabled');
+      document.body.classList.remove('cursor-hover');
+      return;
+    }
+
     enabled = true;
     document.documentElement.classList.add('cursor-enabled');
-  };
-  document.addEventListener('pointermove', enableForMouse, { passive: true });
-  document.addEventListener('pointerdown', (e) => {
-    if (e.pointerType !== 'mouse') {
+    cursor.style.left = event.clientX + 'px';
+    cursor.style.top = event.clientY + 'px';
+  }, { passive: true });
+
+  document.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'mouse') {
       enabled = false;
       document.documentElement.classList.remove('cursor-enabled');
       document.body.classList.remove('cursor-hover');
     }
   }, { passive: true });
 
-  let mx = -200, my = -200;
-  let rx = -200, ry = -200;
-  let cursorFrame = 0;
-  const cursorPositions = ['0%', '50%', '100%'];
-  ring.style.backgroundPosition = cursorPositions[0];
-
-  setInterval(() => {
-    if (!enabled || document.hidden) return;
-    cursorFrame = (cursorFrame + 1) % cursorPositions.length;
-    ring.style.backgroundPosition = cursorPositions[cursorFrame];
-  }, 90);
-
-  document.addEventListener('pointermove', (e) => {
-    if (e.pointerType !== 'mouse' || !enabled) return;
-    mx = e.clientX; my = e.clientY;
-    dot.style.left = mx + 'px';
-    dot.style.top  = my + 'px';
-  });
-
-  // Lag for the ring
-  (function animateRing() {
-    rx += (mx - rx) * 0.12;
-    ry += (my - ry) * 0.12;
-    ring.style.left = rx + 'px';
-    ring.style.top  = ry + 'px';
-    requestAnimationFrame(animateRing);
-  })();
-
-  // Hover detection
-  document.addEventListener('mouseover', (e) => {
+  document.addEventListener('mouseover', (event) => {
     if (!enabled) return;
-    const t = e.target.closest('a, button, [data-hover]');
-    document.body.classList.toggle('cursor-hover', !!t);
+    const target = event.target.closest('a, button, [data-hover]');
+    document.body.classList.toggle('cursor-hover', !!target);
   });
   document.addEventListener('mouseout', () => {
     document.body.classList.remove('cursor-hover');
