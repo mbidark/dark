@@ -67,24 +67,22 @@ img { display: block; max-width: 100%; }
 /* ===== CUSTOM CURSOR ===== */
 #cursor-ring {
   position: fixed;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   pointer-events: none;
   z-index: 10000;
-  transform: translate(-50%, -50%);
+  transform: translate3d(-50%, -50%, 0);
   transform-origin: center;
   background-image: url('custom-cursor.png');
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
   opacity: 0;
-  transition: width 120ms ease, height 120ms ease, filter 120ms ease;
+  will-change: left, top;
 }
 html.cursor-enabled #cursor-ring { opacity: 1; }
 body.cursor-hover #cursor-ring {
-  width: 36px;
-  height: 36px;
-  filter: drop-shadow(0 0 8px rgba(0,212,255,0.72));
+  filter: drop-shadow(0 0 6px rgba(0,212,255,0.72));
 }
 
 /* ===== PRELOADER ===== */
